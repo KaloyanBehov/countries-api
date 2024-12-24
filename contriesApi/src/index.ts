@@ -110,9 +110,13 @@ app.get("/populate", async (c) => {
   try {
     await populateDatabase();
     return c.json({ message: "Database populated successfully" });
-  } catch (error) {
-    console.error("Detailed error:", error);
-    return c.json({ error: error.message }, 500);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Detailed error:", error);
+      return c.json({ error: error.message }, 500);
+    }
+    console.error("Unknown error:", error);
+    return c.json({ error: "An unknown error occurred" }, 500);
   }
 });
 
