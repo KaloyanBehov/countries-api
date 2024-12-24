@@ -201,6 +201,9 @@ app.get("/api/v1/countries/code/:code", async (c) => {
   return c.json(country);
 });
 
-export default {
-  fetch: app.fetch,
-};
+// Export handler for Vercel
+export default async function handler(req: Request) {
+  return app.fetch(req, {
+    headers: req.headers,
+  });
+}
