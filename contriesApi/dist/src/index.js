@@ -20,58 +20,63 @@ async function fetchCountries() {
     }
 }
 async function populateDatabase() {
-    var _a, _b;
     try {
         const countries = await fetchCountries();
-        for (const country of countries) {
-            await prisma.country.upsert({
-                where: { code: country.cca3 },
-                update: {
-                    name: country.name.common,
-                    officialName: country.name.official,
-                    capital: ((_a = country.capital) === null || _a === void 0 ? void 0 : _a[0]) || null,
-                    region: country.region,
-                    population: country.population,
-                    flagUrl: country.flags.png,
-                    currencies: country.currencies
-                        ? Object.entries(country.currencies).map(([code, details]) => ({
-                            code,
-                            name: details.name,
-                            symbol: details.symbol,
-                        }))
-                        : [],
-                    languages: country.languages
-                        ? Object.entries(country.languages).map(([code, name]) => ({
-                            code,
-                            name,
-                        }))
-                        : [],
-                    borders: country.borders || [],
-                },
-                create: {
-                    name: country.name.common,
-                    officialName: country.name.official,
-                    capital: ((_b = country.capital) === null || _b === void 0 ? void 0 : _b[0]) || null,
-                    region: country.region,
-                    population: country.population,
-                    flagUrl: country.flags.png,
-                    currencies: country.currencies
-                        ? Object.entries(country.currencies).map(([code, details]) => ({
-                            code,
-                            name: details.name,
-                            symbol: details.symbol,
-                        }))
-                        : [],
-                    languages: country.languages
-                        ? Object.entries(country.languages).map(([code, name]) => ({
-                            code,
-                            name,
-                        }))
-                        : [],
-                    borders: country.borders || [],
-                    code: country.cca3,
-                },
-            });
+        const batchSize = 10;
+        for (let i = 0; i < countries.length; i += batchSize) {
+            const batch = countries.slice(i, i + batchSize);
+            await Promise.all(batch.map((country) => {
+                var _a, _b;
+                return prisma.country.upsert({
+                    where: { code: country.cca3 },
+                    update: {
+                        name: country.name.common,
+                        officialName: country.name.official,
+                        capital: ((_a = country.capital) === null || _a === void 0 ? void 0 : _a[0]) || null,
+                        region: country.region,
+                        population: country.population,
+                        flagUrl: country.flags.png,
+                        currencies: country.currencies
+                            ? Object.entries(country.currencies).map(([code, details]) => ({
+                                code,
+                                name: details.name,
+                                symbol: details.symbol,
+                            }))
+                            : [],
+                        languages: country.languages
+                            ? Object.entries(country.languages).map(([code, name]) => ({
+                                code,
+                                name,
+                            }))
+                            : [],
+                        borders: country.borders || [],
+                    },
+                    create: {
+                        name: country.name.common,
+                        officialName: country.name.official,
+                        capital: ((_b = country.capital) === null || _b === void 0 ? void 0 : _b[0]) || null,
+                        region: country.region,
+                        population: country.population,
+                        flagUrl: country.flags.png,
+                        currencies: country.currencies
+                            ? Object.entries(country.currencies).map(([code, details]) => ({
+                                code,
+                                name: details.name,
+                                symbol: details.symbol,
+                            }))
+                            : [],
+                        languages: country.languages
+                            ? Object.entries(country.languages).map(([code, name]) => ({
+                                code,
+                                name,
+                            }))
+                            : [],
+                        borders: country.borders || [],
+                        code: country.cca3,
+                    },
+                });
+            }));
+            console.log(`Processed batch ${i / batchSize + 1}`);
         }
         console.log("Database populated successfully");
     }

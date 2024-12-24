@@ -45,56 +45,63 @@ async function fetchCountries(): Promise<Country[]> {
 async function populateDatabase() {
   try {
     const countries = await fetchCountries();
+    const batchSize = 10;
 
-    for (const country of countries) {
-      await prisma.country.upsert({
-        where: { code: country.cca3 },
-        update: {
-          name: country.name.common,
-          officialName: country.name.official,
-          capital: country.capital?.[0] || null,
-          region: country.region,
-          population: country.population,
-          flagUrl: country.flags.png,
-          currencies: country.currencies
-            ? Object.entries(country.currencies).map(([code, details]) => ({
-                code,
-                name: details.name,
-                symbol: details.symbol,
-              }))
-            : [],
-          languages: country.languages
-            ? Object.entries(country.languages).map(([code, name]) => ({
-                code,
-                name,
-              }))
-            : [],
-          borders: country.borders || [],
-        },
-        create: {
-          name: country.name.common,
-          officialName: country.name.official,
-          capital: country.capital?.[0] || null,
-          region: country.region,
-          population: country.population,
-          flagUrl: country.flags.png,
-          currencies: country.currencies
-            ? Object.entries(country.currencies).map(([code, details]) => ({
-                code,
-                name: details.name,
-                symbol: details.symbol,
-              }))
-            : [],
-          languages: country.languages
-            ? Object.entries(country.languages).map(([code, name]) => ({
-                code,
-                name,
-              }))
-            : [],
-          borders: country.borders || [],
-          code: country.cca3,
-        },
-      });
+    for (let i = 0; i < countries.length; i += batchSize) {
+      const batch = countries.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map((country) =>
+          prisma.country.upsert({
+            where: { code: country.cca3 },
+            update: {
+              name: country.name.common,
+              officialName: country.name.official,
+              capital: country.capital?.[0] || null,
+              region: country.region,
+              population: country.population,
+              flagUrl: country.flags.png,
+              currencies: country.currencies
+                ? Object.entries(country.currencies).map(([code, details]) => ({
+                    code,
+                    name: details.name,
+                    symbol: details.symbol,
+                  }))
+                : [],
+              languages: country.languages
+                ? Object.entries(country.languages).map(([code, name]) => ({
+                    code,
+                    name,
+                  }))
+                : [],
+              borders: country.borders || [],
+            },
+            create: {
+              name: country.name.common,
+              officialName: country.name.official,
+              capital: country.capital?.[0] || null,
+              region: country.region,
+              population: country.population,
+              flagUrl: country.flags.png,
+              currencies: country.currencies
+                ? Object.entries(country.currencies).map(([code, details]) => ({
+                    code,
+                    name: details.name,
+                    symbol: details.symbol,
+                  }))
+                : [],
+              languages: country.languages
+                ? Object.entries(country.languages).map(([code, name]) => ({
+                    code,
+                    name,
+                  }))
+                : [],
+              borders: country.borders || [],
+              code: country.cca3,
+            },
+          })
+        )
+      );
+      console.log(`Processed batch ${i / batchSize + 1}`);
     }
     console.log("Database populated successfully");
   } catch (error) {
