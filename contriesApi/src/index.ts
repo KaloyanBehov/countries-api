@@ -111,7 +111,8 @@ app.get("/populate", async (c) => {
     await populateDatabase();
     return c.json({ message: "Database populated successfully" });
   } catch (error) {
-    return c.json({ error: "Failed to populate database" }, 500);
+    console.error("Detailed error:", error);
+    return c.json({ error: error.message }, 500);
   }
 });
 
