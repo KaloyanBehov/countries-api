@@ -3,15 +3,15 @@
    "strict": true,
    "jsx": "react-jsx",
    "jsxImportSource": "hono/jsx",
-   "target": "es2017",
+   "target": "es2017", 
    "module": "commonjs",
    "moduleResolution": "node",
    "outDir": "./dist",
-   "rootDir": "./src",
+   "rootDir": "./",
    "esModuleInterop": true,
    "skipLibCheck": true,
    "types": ["@types/node"],
    "forceConsistentCasingInFileNames": true
  },
- "include": ["src/**/*"]
+ "include": ["api/**/*"]
 }
