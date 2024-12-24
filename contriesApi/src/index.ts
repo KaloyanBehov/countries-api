@@ -42,87 +42,80 @@ async function fetchCountries(): Promise<Country[]> {
   }
 }
 
-async function populateDatabase() {
-  try {
-    const countries = await fetchCountries();
-    const batchSize = 10;
-
-    for (let i = 0; i < countries.length; i += batchSize) {
-      const batch = countries.slice(i, i + batchSize);
-      await Promise.all(
-        batch.map((country) =>
-          prisma.country.upsert({
-            where: { code: country.cca3 },
-            update: {
-              name: country.name.common,
-              officialName: country.name.official,
-              capital: country.capital?.[0] || null,
-              region: country.region,
-              population: country.population,
-              flagUrl: country.flags.png,
-              currencies: country.currencies
-                ? Object.entries(country.currencies).map(([code, details]) => ({
-                    code,
-                    name: details.name,
-                    symbol: details.symbol,
-                  }))
-                : [],
-              languages: country.languages
-                ? Object.entries(country.languages).map(([code, name]) => ({
-                    code,
-                    name,
-                  }))
-                : [],
-              borders: country.borders || [],
-            },
-            create: {
-              name: country.name.common,
-              officialName: country.name.official,
-              capital: country.capital?.[0] || null,
-              region: country.region,
-              population: country.population,
-              flagUrl: country.flags.png,
-              currencies: country.currencies
-                ? Object.entries(country.currencies).map(([code, details]) => ({
-                    code,
-                    name: details.name,
-                    symbol: details.symbol,
-                  }))
-                : [],
-              languages: country.languages
-                ? Object.entries(country.languages).map(([code, name]) => ({
-                    code,
-                    name,
-                  }))
-                : [],
-              borders: country.borders || [],
-              code: country.cca3,
-            },
-          })
-        )
-      );
-      console.log(`Processed batch ${i / batchSize + 1}`);
-    }
-    console.log("Database populated successfully");
-  } catch (error) {
-    console.error("Error populating database:", error);
-    throw error;
-  }
-}
-
 app.use(logger());
 
 // API Routes
-app.get("/populate", async (c) => {
+app.get("/populate/:batch", async (c) => {
   try {
-    await populateDatabase();
-    return c.json({ message: "Database populated successfully" });
+    const { batch } = c.req.param();
+    const batchSize = 5;
+    const countries = await fetchCountries();
+    const start = parseInt(batch) * batchSize;
+    const end = start + batchSize;
+    const batchCountries = countries.slice(start, end);
+
+    await Promise.all(
+      batchCountries.map((country) =>
+        prisma.country.upsert({
+          where: { code: country.cca3 },
+          update: {
+            name: country.name.common,
+            officialName: country.name.official,
+            capital: country.capital?.[0] || null,
+            region: country.region,
+            population: country.population,
+            flagUrl: country.flags.png,
+            currencies: country.currencies
+              ? Object.entries(country.currencies).map(([code, details]) => ({
+                  code,
+                  name: details.name,
+                  symbol: details.symbol,
+                }))
+              : [],
+            languages: country.languages
+              ? Object.entries(country.languages).map(([code, name]) => ({
+                  code,
+                  name,
+                }))
+              : [],
+            borders: country.borders || [],
+          },
+          create: {
+            name: country.name.common,
+            officialName: country.name.official,
+            capital: country.capital?.[0] || null,
+            region: country.region,
+            population: country.population,
+            flagUrl: country.flags.png,
+            currencies: country.currencies
+              ? Object.entries(country.currencies).map(([code, details]) => ({
+                  code,
+                  name: details.name,
+                  symbol: details.symbol,
+                }))
+              : [],
+            languages: country.languages
+              ? Object.entries(country.languages).map(([code, name]) => ({
+                  code,
+                  name,
+                }))
+              : [],
+            borders: country.borders || [],
+            code: country.cca3,
+          },
+        })
+      )
+    );
+
+    return c.json({
+      success: true,
+      message: `Batch ${batch} processed`,
+      remaining: countries.length - end,
+    });
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.error("Detailed error:", error);
       return c.json({ error: error.message }, 500);
     }
-    console.error("Unknown error:", error);
     return c.json({ error: "An unknown error occurred" }, 500);
   }
 });
@@ -208,7 +201,6 @@ app.get("/api/v1/countries/code/:code", async (c) => {
   return c.json(country);
 });
 
-// Export handler for Vercel
 export default async function handler(req: Request) {
   return app.fetch(req, {
     headers: req.headers,
