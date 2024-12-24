@@ -201,4 +201,6 @@ app.get("/api/v1/countries/code/:code", async (c) => {
   return c.json(country);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+};
