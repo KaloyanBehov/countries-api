@@ -1,5 +1,5 @@
 {
-  "outputDirectory": "dist",
+  "version": 2,
   "builds": [
     {
       "src": "src/index.ts",

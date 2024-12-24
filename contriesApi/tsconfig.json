@@ -3,13 +3,15 @@
    "strict": true,
    "jsx": "react-jsx",
    "jsxImportSource": "hono/jsx",
-   "target": "esnext",
-   "module": "esnext",
+   "target": "es2017",
+   "module": "commonjs",
    "moduleResolution": "node",
    "outDir": "./dist",
    "rootDir": "./src",
    "esModuleInterop": true,
    "skipLibCheck": true,
-   "types": ["@types/node"]
- }
+   "types": ["@types/node"],
+   "forceConsistentCasingInFileNames": true
+ },
+ "include": ["src/**/*"]
 }
